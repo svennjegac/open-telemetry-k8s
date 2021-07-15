@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"time"
 
 	"ip-grpc/internal/ip"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/keepalive"
@@ -28,13 +30,17 @@ func NewServer() *Server {
 
 func (s *Server) Start(ctx context.Context) {
 	// create grpc server and register ip service handler
-	grpcServer := grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
-		MaxConnectionIdle:     time.Duration(3600000) * time.Millisecond,
-		MaxConnectionAge:      time.Duration(12000) * time.Millisecond,
-		MaxConnectionAgeGrace: time.Duration(5000) * time.Millisecond,
-		Time:                  time.Duration(3600000) * time.Millisecond,
-		Timeout:               time.Duration(20000) * time.Millisecond,
-	}))
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
+		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle:     time.Duration(3600000) * time.Millisecond,
+			MaxConnectionAge:      time.Duration(12000) * time.Millisecond,
+			MaxConnectionAgeGrace: time.Duration(5000) * time.Millisecond,
+			Time:                  time.Duration(3600000) * time.Millisecond,
+			Timeout:               time.Duration(20000) * time.Millisecond,
+		}),
+	)
 
 	ipSvc := &ipService{ip: "99.66.33.11"}
 	ip.RegisterIPServiceServer(grpcServer, ipSvc)
@@ -64,6 +70,7 @@ func (i *ipService) TellMeYourIP(ctx context.Context, req *ip.TellMeYourIPReques
 	}
 
 	log.Println("handling request;", req.ClientIp)
+	time.Sleep(time.Duration(rand.Intn(50)+30) * time.Millisecond)
 
 	return &ip.TellMeYourIPResponse{
 		ServerIp: i.ip,
