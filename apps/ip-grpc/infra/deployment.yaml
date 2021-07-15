@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ip-grpc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ip-grpc
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ip-grpc
+    spec:
+      containers:
+        - name: ip-grpc
+          image: ip-grpc:v1.0.0
+          ports:
+            - containerPort: 8113
+        - name: agent
+          image: otel/opentelemetry-collector:0.18.0
+          args:
+            - --config=/conf/agent.yaml
+          volumeMounts:
+            - mountPath: /conf
+              name: agent-config
+      volumes:
+        - configMap:
+            items:
+              - key: agent.yaml
+                path: agent.yaml
+            name: agent-config
+          name: agent-config
