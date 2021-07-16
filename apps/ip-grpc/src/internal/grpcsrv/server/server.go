@@ -11,6 +11,8 @@ import (
 	"ip-grpc/internal/ip"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/keepalive"
@@ -42,7 +44,10 @@ func (s *Server) Start(ctx context.Context) {
 		}),
 	)
 
-	ipSvc := &ipService{ip: "99.66.33.11"}
+	ipSvc := &ipService{
+		ip:     "99.66.33.11",
+		tracer: otel.Tracer("sven.njegac/basic-2"),
+	}
 	ip.RegisterIPServiceServer(grpcServer, ipSvc)
 
 	// initialize listener for incoming tcp connections
@@ -61,13 +66,17 @@ func (s *Server) Start(ctx context.Context) {
 }
 
 type ipService struct {
-	ip string
+	ip     string
+	tracer trace.Tracer
 }
 
 func (i *ipService) TellMeYourIP(ctx context.Context, req *ip.TellMeYourIPRequest) (*ip.TellMeYourIPResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "nil request received")
 	}
+
+	ctx, span := i.tracer.Start(ctx, "tell-me-your-ip")
+	defer span.End()
 
 	log.Println("handling request;", req.ClientIp)
 	time.Sleep(time.Duration(rand.Intn(50)+30) * time.Millisecond)

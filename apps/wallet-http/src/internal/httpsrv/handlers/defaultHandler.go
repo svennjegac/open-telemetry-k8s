@@ -11,19 +11,16 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/baggage"
-	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type DefaultHandler struct {
-	tracer      trace.Tracer
-	propagators propagation.TextMapPropagator
+	tracer trace.Tracer
 }
 
 func NewDefaultHandler() *DefaultHandler {
 	return &DefaultHandler{
-		tracer:      otel.Tracer("sven.njegac/basic-2"),
-		propagators: otel.GetTextMapPropagator(),
+		tracer: otel.Tracer("sven.njegac/basic-2"),
 	}
 }
 

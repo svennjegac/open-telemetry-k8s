@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: ip-grpc
-          image: ip-grpc:v1.0.2
+          image: ip-grpc:v1.0.4
           ports:
             - containerPort: 8113
         - name: agent
