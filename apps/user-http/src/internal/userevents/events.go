@@ -7,6 +7,8 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/pkg/errors"
+	"github.com/svennjegac/opentelemetry-go-contrib/instrumentation/github.com/confluentinc/confluent-kafka-go/kafka/otelkafka"
+	"go.opentelemetry.io/otel"
 )
 
 const (
@@ -46,11 +48,9 @@ func (p *Producer) Produce(ctx context.Context, id string) error {
 		return err
 	}
 
-	md, err := producer.GetMetadata(nil, true, 10000)
+	_, err = producer.GetMetadata(nil, true, 10000)
 	if err != nil {
 		return err
-	} else {
-		fmt.Println(md)
 	}
 
 	// Drain events channel to prevent memory leak
@@ -79,8 +79,14 @@ func (p *Producer) Produce(ctx context.Context, id string) error {
 		Headers:       nil,
 	}
 
+	pr := otelkafka.WrapProducer(producer)
+
+	carrier := otelkafka.NewMessageCarrier(msg)
+
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+
 	delCh := make(chan kafka.Event, 1)
-	err = producer.Produce(msg, delCh)
+	err = pr.Produce(msg, delCh)
 	if err != nil {
 		return err
 	}
