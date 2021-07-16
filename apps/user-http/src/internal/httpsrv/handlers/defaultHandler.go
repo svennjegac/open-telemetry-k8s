@@ -11,6 +11,7 @@ import (
 	"user-http/internal/memorydb"
 	"user-http/internal/models"
 	"user-http/internal/tellip"
+	"user-http/internal/userevents"
 	"user-http/internal/wallet"
 
 	"github.com/julienschmidt/httprouter"
@@ -26,6 +27,7 @@ type DefaultHandler struct {
 	userRepository         UserRepository
 	walletRepo             WalletRepo
 	tellMeYourIPRepository TellMeYourIPRepository
+	userEventsProducer     UserEventsProducer
 }
 
 func NewDefaultHandler() *DefaultHandler {
@@ -36,6 +38,7 @@ func NewDefaultHandler() *DefaultHandler {
 		userRepository:         memorydb.New(),
 		walletRepo:             wallet.New(),
 		tellMeYourIPRepository: tellip.NewTellIP(),
+		userEventsProducer:     userevents.NewProducer(),
 	}
 }
 
@@ -77,6 +80,16 @@ func (d *DefaultHandler) Default() httprouter.Handle {
 		}
 
 		err = d.tellMeYourIPRepository.TellMeYourIP(ctx)
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			_, err = fmt.Fprintf(writer, "err: %+v", err)
+			if err != nil {
+				log.Println("default err", err)
+			}
+			return
+		}
+
+		err = d.userEventsProducer.Produce(ctx, user.Id)
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
 			_, err = fmt.Fprintf(writer, "err: %+v", err)
@@ -128,4 +141,8 @@ type WalletRepo interface {
 
 type TellMeYourIPRepository interface {
 	TellMeYourIP(ctx context.Context) error
+}
+
+type UserEventsProducer interface {
+	Produce(ctx context.Context, id string) error
 }
