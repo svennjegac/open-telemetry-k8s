@@ -4,7 +4,7 @@ cd $(dirname $0)
 
 eval $(minikube docker-env)
 
-docker build -t wallet-http:v1.0.8 ./../src/
+docker build -t wallet-http:v1.0.10 ./../src/
 
 kubectl apply -f deployment.yaml
 kubectl apply -f service.yaml

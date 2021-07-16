@@ -10,6 +10,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -29,34 +30,17 @@ func NewDefaultHandler() *DefaultHandler {
 func (d *DefaultHandler) Default() httprouter.Handle {
 	return func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-		fmt.Println("###### Handling new request")
-
-		fmt.Println("Top level context")
-		fmt.Printf("%s\n", request.Context())
-		fmt.Printf("%+v\n", request.Context())
-		fmt.Printf("%p\n", request.Context())
-		fmt.Printf("%T\n", request.Context())
-
 		var hf http.HandlerFunc
-
 		hf = func(w http.ResponseWriter, r *http.Request) {
-			fmt.Println("Inside level context")
-			fmt.Printf("%s\n", r.Context())
-			fmt.Printf("%+v\n", r.Context())
-			fmt.Printf("%p\n", r.Context())
-			fmt.Printf("%T\n", r.Context())
-
-			ctx := d.propagators.Extract(r.Context(), propagation.HeaderCarrier(r.Header))
-
-			ctx, span := d.tracer.Start(ctx, "register-wallet")
+			ctx, span := d.tracer.Start(r.Context(), "register-wallet")
 			defer span.End()
 
 			time.Sleep(time.Duration(rand.Intn(50)+30) * time.Millisecond)
 
-			// bag := baggage.FromContext(ctx)
-			// fmt.Println(bag.String())
-			// fmt.Println(bag.Len())
-			// fmt.Println(bag.Members())
+			bag := baggage.FromContext(ctx)
+			fmt.Println(bag.String())
+			fmt.Println(bag.Len())
+			fmt.Println(bag.Members())
 
 			w.WriteHeader(http.StatusOK)
 			_, err := fmt.Fprintf(w, "okeish")

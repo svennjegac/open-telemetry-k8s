@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: wallet-http
-          image: wallet-http:v1.0.8
+          image: wallet-http:v1.0.10
           ports:
             - containerPort: 8112
         - name: agent
