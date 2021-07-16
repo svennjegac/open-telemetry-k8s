@@ -8,3 +8,4 @@ docker build -t wallet-http:v1.0.10 ./../src/
 
 kubectl apply -f deployment.yaml
 kubectl apply -f service.yaml
+kubectl apply -f local-service.yaml
