@@ -50,7 +50,7 @@ func (d *DefaultHandler) Default() httprouter.Handle {
 		_, span2 := d.tracer.Start(ctx, "background-gc-job")
 		time.Sleep(time.Millisecond * 20)
 
-		subRes := d.defaultSubFunction(ctx)
+		subRes := d.requestValidator(ctx)
 
 		time.Sleep(time.Millisecond * 30)
 
@@ -94,12 +94,12 @@ func (d *DefaultHandler) Default() httprouter.Handle {
 	}
 }
 
-func (d *DefaultHandler) defaultSubFunction(ctx context.Context) string {
+func (d *DefaultHandler) requestValidator(ctx context.Context) string {
 	var span trace.Span
 	ctx, span = d.tracer.Start(ctx, "request-validator")
 	defer span.End()
 
-	time.Sleep(time.Duration(rand.Intn(60)+300) * time.Millisecond)
+	time.Sleep(time.Duration(rand.Intn(60)+100) * time.Millisecond)
 
 	span.SetAttributes(d.key2.String("key-2-no"))
 	span.AddEvent("Sub span event")

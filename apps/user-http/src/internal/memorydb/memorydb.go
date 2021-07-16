@@ -54,7 +54,7 @@ func (d *DB) GetUser(ctx context.Context, id string) (models.User, error) {
 	delay := rand.Intn(200)
 	delay += 50
 	time.Sleep(time.Duration(delay) * time.Millisecond)
-	if delay > 120 {
+	if delay > 170 {
 		span.RecordError(errors.New("network record error"))
 		span.SetStatus(codes.Error, "")
 		span.AddEvent("network failure", trace.WithAttributes(attribute.Int("delay", delay)))
