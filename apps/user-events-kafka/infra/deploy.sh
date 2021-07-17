@@ -2,4 +2,8 @@
 
 cd $(dirname $0)
 
-kubectl apply -f service.yaml
+eval $(minikube docker-env)
+
+docker build -t user-events-kafka:v1.0.6 ./../src/
+
+kubectl apply -f deployment.yaml
