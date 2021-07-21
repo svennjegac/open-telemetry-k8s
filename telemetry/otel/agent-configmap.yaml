@@ -13,7 +13,7 @@ data:
 
     exporters:
       otlp:
-        endpoint: "opentelemetrycollector.default.svc.cluster.local:4317"
+        endpoint: "opentelemetrycollector.observability-sven.svc.cluster.local:4317"
         insecure: true
 
     service:
