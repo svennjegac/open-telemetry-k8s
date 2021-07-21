@@ -32,7 +32,7 @@ func (c *Consumer) Consume() error {
 		"message.timeout.ms":    1000,
 		"partitioner":           "murmur2_random", // consistent_random
 		//
-		"bootstrap.servers":       "192.168.65.2:9092",
+		"bootstrap.servers":       "my-cluster-kafka-brokers.kafka.svc.cluster.local:9092",
 		"socket.keepalive.enable": true,
 		"socket.max.fails":        1,
 
