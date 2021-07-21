@@ -4,7 +4,7 @@ cd $(dirname $0)
 
 eval $(minikube docker-env)
 
-docker build -t ip-grpc:v1.0.4 ./../src/
+docker build -t ip-grpc:v1.0.5 ./../src/
 
 kubectl apply -f deployment.yaml
 kubectl apply -f service.yaml
