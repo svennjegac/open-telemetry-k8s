@@ -41,8 +41,8 @@ func createTraceProvider(traceExporter sdktrace.SpanExporter) (*sdktrace.TracerP
 	resources := resource.NewWithAttributes(
 		semconv.SchemaURL,
 		semconv.ServiceNameKey.String("ip-grpc"),
-		semconv.ServiceVersionKey.String("1.0.4"),
-		semconv.ServiceInstanceIDKey.String("ip-grpc-1.0.4"),
+		semconv.ServiceVersionKey.String("1.0.6"),
+		semconv.ServiceInstanceIDKey.String("ip-grpc-1.0.6"),
 	)
 
 	ctx := context.Background()
