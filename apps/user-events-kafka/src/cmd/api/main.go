@@ -1,17 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
+	"user-events-kafka/cmd/api/bootstrap"
 	"user-events-kafka/internal/optelm"
-	"user-events-kafka/internal/userevents"
 )
 
 func main() {
-	optelm.Setup()
+	tracerProviderShutdown := optelm.Setup()
+	defer tracerProviderShutdown()
 
-	consumer := userevents.NewConsumer()
+	consumer := bootstrap.Consumer()
 
-	err := consumer.Consume()
-	fmt.Println(err)
+	fmt.Println(consumer.Consume(context.Background()))
 }

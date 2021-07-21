@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: user-events-kafka
-          image: user-events-kafka:v1.0.7
+          image: user-events-kafka:v1.0.8
         - name: agent
           image: otel/opentelemetry-collector:0.18.0
           args:
