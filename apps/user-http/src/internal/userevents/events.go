@@ -12,50 +12,38 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const (
-	logBrokers = "brokers"
-)
-
 type Producer struct {
 	tracer trace.Tracer
 }
 
 func NewProducer() *Producer {
 	return &Producer{
-		tracer: otel.Tracer("sven.njegac/basic"),
+		tracer: otel.Tracer("sven.njegac/open-telemetry-k8s"),
 	}
 }
 
 func (p *Producer) Produce(ctx context.Context, id string) error {
-	ctx, span := p.tracer.Start(ctx, "user-events-in-app-produce")
+	ctx, span := p.tracer.Start(ctx, "user-events-app-produce")
 	defer span.End()
 
 	cm := &kafka.ConfigMap{
-		"bootstrap.servers":       "my-cluster-kafka-brokers.kafka.svc.cluster.local:9092",
-		"max.in.flight":           1,
-		"socket.keepalive.enable": true,
-		"socket.max.fails":        1,
-
-		// "enable.idempotence":           enableIdempotence,
-		// "queue.buffering.max.messages": queueBufferingMaxMessages,
-		// "queue.buffering.max.kbytes":   queueBufferingMaxKbytes,
+		"bootstrap.servers":        "my-cluster-kafka-brokers.kafka.svc.cluster.local:9092",
+		"max.in.flight":            1,
+		"socket.keepalive.enable":  true,
+		"socket.max.fails":         1,
 		"queue.buffering.max.ms":   5,
 		"message.send.max.retries": 3,
-		// "retry.backoff.ms":             retryBackoffMs,
-		// "compression.codec":            compressionCodec,
-		// "batch.num.messages":           batchNumMessages,
-
-		"request.required.acks": -1,
-		"request.timeout.ms":    4000,
-		"message.timeout.ms":    4000,
-		"partitioner":           "murmur2_random", // consistent_random
+		"request.required.acks":    -1,
+		"request.timeout.ms":       4000,
+		"message.timeout.ms":       4000,
+		"partitioner":              "murmur2_random", // consistent_random
 	}
+
 	producer, err := kafka.NewProducer(cm)
 	if err != nil {
 		span.RecordError(err)
 		return errors.Wrap(err, "new producer")
 	}
-
 
 	_, err = producer.GetMetadata(nil, true, 10000)
 	if err != nil {
@@ -88,15 +76,13 @@ func (p *Producer) Produce(ctx context.Context, id string) error {
 		Opaque:        nil,
 		Headers:       nil,
 	}
-
-	pr := otelkafka.WrapProducer(producer)
-
 	carrier := otelkafka.NewMessageCarrier(msg)
-
 	otel.GetTextMapPropagator().Inject(ctx, carrier)
 
+	otelProducer := otelkafka.WrapProducer(producer)
 	delCh := make(chan kafka.Event, 1)
-	err = pr.Produce(msg, delCh)
+
+	err = otelProducer.Produce(msg, delCh)
 	if err != nil {
 		span.RecordError(err)
 		return errors.Wrap(err, "produce")
@@ -106,6 +92,7 @@ func (p *Producer) Produce(ctx context.Context, id string) error {
 	case ack := <-delCh:
 		fmt.Println(ack)
 		return nil
+
 	case <-time.After(time.Second * 5):
 		span.RecordError(errors.New("ctx deadline exceeded"))
 		return errors.New("ctx deadline exceeded")

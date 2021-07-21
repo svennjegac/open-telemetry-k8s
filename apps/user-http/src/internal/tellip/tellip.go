@@ -38,13 +38,13 @@ func NewTellIP() *TellIP {
 	client := ip.NewIPServiceClient(conn)
 
 	return &TellIP{
-		tracer: otel.Tracer("sven.njegac/basic"),
+		tracer: otel.Tracer("sven.njegac/open-telemetry-k8s"),
 		client: client,
 	}
 }
 
 func (t *TellIP) TellMeYourIP(ctx context.Context) error {
-	ctx, span := t.tracer.Start(ctx, "ip-tell-me-ip")
+	ctx, span := t.tracer.Start(ctx, "tell-me-your-ip")
 	defer span.End()
 
 	md := metadata.Pairs(
@@ -56,7 +56,7 @@ func (t *TellIP) TellMeYourIP(ctx context.Context) error {
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := t.client.TellMeYourIP(ctx, &ip.TellMeYourIPRequest{
-		ClientIp: "user-http-1.1.1.0",
+		ClientIp: "user-http-1.0.40",
 	})
 	if err != nil {
 		span.RecordError(err)

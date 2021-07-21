@@ -20,49 +20,48 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type DefaultHandler struct {
+type UserHandler struct {
 	tracer                 trace.Tracer
-	key1                   attribute.Key
-	key2                   attribute.Key
+	otelUserIDKey          attribute.Key
+	otelTimeKey            attribute.Key
 	userRepository         UserRepository
-	walletRepo             WalletRepo
+	walletRepository       WalletRepository
 	tellMeYourIPRepository TellMeYourIPRepository
 	userEventsProducer     UserEventsProducer
 }
 
-func NewDefaultHandler() *DefaultHandler {
-	return &DefaultHandler{
-		tracer:                 otel.Tracer("sven.njegac/basic"),
-		key1:                   "sven.njegac/key-1",
-		key2:                   "sven.njegac/key-2",
+func NewDefaultHandler() *UserHandler {
+	return &UserHandler{
+		tracer:                 otel.Tracer("sven.njegac/open-telemetry-k8s"),
+		otelUserIDKey:          "get-user/id",
+		otelTimeKey:            "get-user/time",
 		userRepository:         memorydb.New(),
-		walletRepo:             wallet.New(),
+		walletRepository:       wallet.New(),
 		tellMeYourIPRepository: tellip.NewTellIP(),
 		userEventsProducer:     userevents.NewProducer(),
 	}
 }
 
-func (d *DefaultHandler) Default() httprouter.Handle {
+func (d *UserHandler) GetUser() httprouter.Handle {
 	return func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		ctx, span := d.tracer.Start(context.Background(), "get-user")
 		defer span.End()
 
-		span.AddEvent("Nice operation!", trace.WithAttributes(attribute.Int("bogons", 100)))
-		span.SetAttributes(d.key1.String("key-1-yes"))
+		span.AddEvent("new get user id request", trace.WithAttributes(attribute.Int("user-count", 87)))
+		span.SetAttributes(d.otelUserIDKey.String(params.ByName("id")))
 
 		_, span2 := d.tracer.Start(ctx, "background-gc-job")
 		time.Sleep(time.Millisecond * 20)
 
-		subRes := d.requestValidator(ctx)
-
+		d.requestValidator(ctx)
 		time.Sleep(time.Millisecond * 30)
 
-		err := d.walletRepo.RegisterToWallet(ctx, params.ByName("id"))
+		err := d.walletRepository.RegisterToWallet(ctx, params.ByName("id"))
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
 			_, err = fmt.Fprintf(writer, "err: %+v", err)
 			if err != nil {
-				log.Println("default err", err)
+				log.Println("response print err", err)
 			}
 			return
 		}
@@ -74,7 +73,7 @@ func (d *DefaultHandler) Default() httprouter.Handle {
 			writer.WriteHeader(http.StatusNotFound)
 			_, err = fmt.Fprintf(writer, "err: %+v", err)
 			if err != nil {
-				log.Println("default err", err)
+				log.Println("response print err", err)
 			}
 			return
 		}
@@ -84,7 +83,7 @@ func (d *DefaultHandler) Default() httprouter.Handle {
 			writer.WriteHeader(http.StatusInternalServerError)
 			_, err = fmt.Fprintf(writer, "err: %+v", err)
 			if err != nil {
-				log.Println("default err", err)
+				log.Println("response print err", err)
 			}
 			return
 		}
@@ -94,48 +93,34 @@ func (d *DefaultHandler) Default() httprouter.Handle {
 			writer.WriteHeader(http.StatusInternalServerError)
 			_, err = fmt.Fprintf(writer, "err: %+v", err)
 			if err != nil {
-				log.Println("default err", err)
+				log.Println("response print err", err)
 			}
 			return
 		}
 
 		writer.WriteHeader(http.StatusOK)
-		_, err = fmt.Fprintf(writer, "default route, time: %s, subRes: %s, userName: %s", time.Now(), subRes, user.Name)
+		_, err = fmt.Fprintf(writer, "default route, time: %s, userName: %s", time.Now(), user.Name)
 		if err != nil {
-			log.Println("default err", err)
+			log.Println("response print err", err)
 		}
 	}
 }
 
-func (d *DefaultHandler) requestValidator(ctx context.Context) string {
-	var span trace.Span
-	ctx, span = d.tracer.Start(ctx, "request-validator")
+func (d *UserHandler) requestValidator(ctx context.Context) {
+	ctx, span := d.tracer.Start(ctx, "request-validator")
 	defer span.End()
 
 	time.Sleep(time.Duration(rand.Intn(60)+100) * time.Millisecond)
 
-	span.SetAttributes(d.key2.String("key-2-no"))
-	span.AddEvent("Sub span event")
-
-	return "sub function result"
-}
-
-func (d *DefaultHandler) Hello() httprouter.Handle {
-	return func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-
-		writer.WriteHeader(http.StatusOK)
-		_, err := fmt.Fprintf(writer, "hello route, time: %s", time.Now())
-		if err != nil {
-			log.Println("default err", err)
-		}
-	}
+	span.SetAttributes(d.otelTimeKey.String(time.Now().String()))
+	span.AddEvent("successful request validation")
 }
 
 type UserRepository interface {
 	GetUser(ctx context.Context, id string) (models.User, error)
 }
 
-type WalletRepo interface {
+type WalletRepository interface {
 	RegisterToWallet(ctx context.Context, id string) error
 }
 

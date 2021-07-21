@@ -15,15 +15,15 @@ import (
 )
 
 type DB struct {
-	tracer trace.Tracer
-	key1   attribute.Key
-	db     map[string]models.User
+	tracer        trace.Tracer
+	otelUserIDKey attribute.Key
+	db            map[string]models.User
 }
 
 func New() *DB {
 	return &DB{
-		tracer: otel.Tracer("sven.njegac/basic"),
-		key1:   "memory-db/user-id",
+		tracer:        otel.Tracer("sven.njegac/open-telemetry-k8s"),
+		otelUserIDKey: "memory-db/user-id",
 		db: map[string]models.User{
 			"1x": {
 				Id:   "1x",
@@ -48,7 +48,7 @@ func (d *DB) GetUser(ctx context.Context, id string) (models.User, error) {
 	ctx, span := d.tracer.Start(ctx, "db-get-user")
 	defer span.End()
 
-	span.SetAttributes(d.key1.String(id))
+	span.SetAttributes(d.otelUserIDKey.String(id))
 
 	// fake db delay
 	delay := rand.Intn(200)

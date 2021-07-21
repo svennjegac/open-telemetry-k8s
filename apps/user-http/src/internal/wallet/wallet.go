@@ -22,7 +22,7 @@ func New() *Wallet {
 	cli := &http.Client{}
 	cli.Transport = otelhttp.NewTransport(cli.Transport)
 	return &Wallet{
-		tracer:      otel.Tracer("sven.njegac/basic"),
+		tracer:      otel.Tracer("sven.njegac/open-telemetry-k8s"),
 		propagators: otel.GetTextMapPropagator(),
 		client:      cli,
 	}
@@ -32,7 +32,7 @@ func (h *Wallet) RegisterToWallet(ctx context.Context, id string) error {
 	ctx, span := h.tracer.Start(ctx, "register-wallet")
 	defer span.End()
 
-	prop, err := baggage.NewKeyValueProperty("id-property", "id-val"+id)
+	prop, err := baggage.NewKeyValueProperty("id-property", id)
 	if err != nil {
 		span.SetStatus(codes.Error, "property construction")
 		span.RecordError(err)
@@ -60,7 +60,6 @@ func (h *Wallet) RegisterToWallet(ctx context.Context, id string) error {
 	if err != nil {
 		panic(err)
 	}
-
 	r = r.WithContext(ctx)
 
 	h.propagators.Inject(ctx, propagation.HeaderCarrier(r.Header))
