@@ -24,13 +24,10 @@ const (
 )
 
 type Server struct {
+	grpcServer *grpc.Server
 }
 
 func NewServer() *Server {
-	return &Server{}
-}
-
-func (s *Server) Start(ctx context.Context) {
 	// create grpc server and register ip service handler
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
@@ -46,11 +43,16 @@ func (s *Server) Start(ctx context.Context) {
 
 	ipSvc := &ipService{
 		ip:     "99.66.33.11",
-		tracer: otel.Tracer("sven.njegac/basic-2"),
+		tracer: otel.Tracer("sven.njegac/open-telemetry-k8s"),
 	}
 	ip.RegisterIPServiceServer(grpcServer, ipSvc)
 
-	// initialize listener for incoming tcp connections
+	return &Server{
+		grpcServer: grpcServer,
+	}
+}
+
+func (s *Server) Start(ctx context.Context) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatalf("error listening for tcp connections; port=%d, err=%s\n", port, err)
@@ -59,7 +61,7 @@ func (s *Server) Start(ctx context.Context) {
 
 	// start listening for grpc requests
 	log.Printf("ip service started; port=%d\n", port)
-	err = grpcServer.Serve(lis)
+	err = s.grpcServer.Serve(lis)
 	if err != nil {
 		log.Fatalf("error serving grpc requests; err=%s\n", err)
 	}

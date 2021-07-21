@@ -8,7 +8,8 @@ import (
 )
 
 func main() {
-	optelm.Setup()
+	tracerProviderShutdown := optelm.Setup()
+	defer tracerProviderShutdown()
 
 	server := bootstrap.Server()
 

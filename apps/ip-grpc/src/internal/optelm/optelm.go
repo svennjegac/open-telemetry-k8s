@@ -8,30 +8,20 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
-func Setup() {
+func Setup() func() {
 	traceExporter := createOTLPExporter()
 
-	traceProvider, _ := createTraceProvider(traceExporter)
-	// defer traceProviderShutdown()
+	traceProvider, traceProviderShutdown := createTraceProvider(traceExporter)
 
 	setOTELGlobals(traceProvider)
-}
 
-func createConsoleExporter() *stdouttrace.Exporter {
-	traceExporter, err := stdouttrace.New(
-		stdouttrace.WithPrettyPrint(),
-	)
-	if err != nil {
-		log.Fatalf("failed to initialize stdouttrace export pipeline: %v", err)
-	}
-	return traceExporter
+	return traceProviderShutdown
 }
 
 func createOTLPExporter() *otlptrace.Exporter {
@@ -51,20 +41,24 @@ func createTraceProvider(traceExporter sdktrace.SpanExporter) (*sdktrace.TracerP
 	resources := resource.NewWithAttributes(
 		semconv.SchemaURL,
 		semconv.ServiceNameKey.String("ip-grpc"),
-		semconv.ServiceVersionKey.String("1.2.0"),
-		semconv.ServiceInstanceIDKey.String("ip-grpc-334400"),
+		semconv.ServiceVersionKey.String("1.0.4"),
+		semconv.ServiceInstanceIDKey.String("ip-grpc-1.0.4"),
 	)
 
 	ctx := context.Background()
 	bsp := sdktrace.NewBatchSpanProcessor(traceExporter)
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithSpanProcessor(bsp),
+		// TODO investigate samplers
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithResource(resources),
 	)
 
-	// Handle this error in a sensible manner where possible
-	return tp, func() { _ = tp.Shutdown(ctx) }
+	tpShutdown := func() {
+		log.Println("tracer provider shutting down", tp.Shutdown(ctx))
+	}
+
+	return tp, tpShutdown
 }
 
 func setOTELGlobals(tp *sdktrace.TracerProvider) {
