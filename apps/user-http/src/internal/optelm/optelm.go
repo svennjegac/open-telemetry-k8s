@@ -41,8 +41,8 @@ func createTraceProvider(traceExporter sdktrace.SpanExporter) (*sdktrace.TracerP
 	resources := resource.NewWithAttributes(
 		semconv.SchemaURL,
 		semconv.ServiceNameKey.String("user-http"),
-		semconv.ServiceVersionKey.String("1.0.40"),
-		semconv.ServiceInstanceIDKey.String("user-http-1.0.40"),
+		semconv.ServiceVersionKey.String("2.0.0"),
+		semconv.ServiceInstanceIDKey.String("user-http-2.0.0"),
 	)
 
 	ctx := context.Background()
