@@ -8,23 +8,20 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type Wallet struct {
-	tracer      trace.Tracer
-	propagators propagation.TextMapPropagator
-	client      *http.Client
+	tracer trace.Tracer
+	client *http.Client
 }
 
 func New() *Wallet {
 	cli := &http.Client{}
 	cli.Transport = otelhttp.NewTransport(cli.Transport)
 	return &Wallet{
-		tracer:      otel.Tracer("sven.njegac/open-telemetry-k8s"),
-		propagators: otel.GetTextMapPropagator(),
-		client:      cli,
+		tracer: otel.Tracer("sven.njegac/open-telemetry-k8s"),
+		client: cli,
 	}
 }
 
@@ -61,8 +58,6 @@ func (h *Wallet) RegisterToWallet(ctx context.Context, id string) error {
 		panic(err)
 	}
 	r = r.WithContext(ctx)
-
-	h.propagators.Inject(ctx, propagation.HeaderCarrier(r.Header))
 
 	resp, err := h.client.Do(r)
 	if err != nil {

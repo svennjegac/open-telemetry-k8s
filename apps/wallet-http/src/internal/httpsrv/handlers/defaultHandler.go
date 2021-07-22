@@ -20,7 +20,7 @@ type DefaultHandler struct {
 
 func NewDefaultHandler() *DefaultHandler {
 	return &DefaultHandler{
-		tracer: otel.Tracer("sven.njegac/basic-2"),
+		tracer: otel.Tracer("sven.njegac/open-telemetry-k8s"),
 	}
 }
 
@@ -35,9 +35,14 @@ func (d *DefaultHandler) Default() httprouter.Handle {
 			time.Sleep(time.Duration(rand.Intn(50)+30) * time.Millisecond)
 
 			bag := baggage.FromContext(ctx)
+			fmt.Println("-----")
+			fmt.Println("Printing new baggage")
 			fmt.Println(bag.String())
 			fmt.Println(bag.Len())
 			fmt.Println(bag.Members())
+
+			fmt.Println("Printing request")
+			fmt.Println(request)
 
 			w.WriteHeader(http.StatusOK)
 			_, err := fmt.Fprintf(w, "okeish")
