@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: user-http
-          image: user-http:v2.0.4
+          image: user-http:v2.0.8
         - name: agent
           image: otel/opentelemetry-collector:0.18.0
           args:
