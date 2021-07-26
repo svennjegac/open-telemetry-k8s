@@ -14,20 +14,6 @@ spec:
     spec:
       containers:
         - name: ip-grpc
-          image: ip-grpc:v1.0.6
+          image: ip-grpc:v1.0.8
           ports:
             - containerPort: 8113
-        - name: agent
-          image: otel/opentelemetry-collector:0.18.0
-          args:
-            - --config=/conf/agent.yaml
-          volumeMounts:
-            - mountPath: /conf
-              name: agent-config
-      volumes:
-        - configMap:
-            items:
-              - key: agent.yaml
-                path: agent.yaml
-            name: agent-config
-          name: agent-config

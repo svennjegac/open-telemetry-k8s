@@ -29,7 +29,8 @@ func createOTLPExporter() *otlptrace.Exporter {
 		context.Background(),
 		otlptracegrpc.WithInsecure(),
 		otlptracegrpc.WithTimeout(time.Second*3),
-		otlptracegrpc.WithEndpoint(":4317"),
+		// otlptracegrpc.WithEndpoint(":4317"),
+		otlptracegrpc.WithEndpoint("opentelemetrycollector.observability-sven.svc.cluster.local:4317"),
 	)
 	if err != nil {
 		log.Fatalf("failed to initialize grpc trace export pipeline: %v", err)
