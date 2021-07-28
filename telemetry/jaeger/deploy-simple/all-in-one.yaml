@@ -2,3 +2,7 @@ apiVersion: jaegertracing.io/v1
 kind: Jaeger
 metadata:
   name: simplest
+spec:
+  strategy: allInOne # <1>
+  ingress:
+    enabled: false # <8>
