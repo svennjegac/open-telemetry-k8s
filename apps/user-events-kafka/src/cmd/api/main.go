@@ -5,11 +5,12 @@ import (
 	"fmt"
 
 	"user-events-kafka/cmd/api/bootstrap"
+	"user-events-kafka/internal/optelm"
 )
 
 func main() {
-	// tracerProviderShutdown := optelm.Setup()
-	// defer tracerProviderShutdown()
+	tracerProviderShutdown := optelm.Setup()
+	defer tracerProviderShutdown()
 
 	consumer := bootstrap.Consumer()
 
