@@ -1,5 +1,7 @@
 FROM golang:1.16 AS build
 
+RUN go get github.com/go-delve/delve/cmd/dlv
+
 WORKDIR /app
 
 COPY go.mod .
@@ -8,8 +10,10 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /app-exe ./cmd/api
+RUN go build -gcflags="all=-N -l" -o /app-exe ./cmd/api
 
-EXPOSE 8112
+EXPOSE 8112 40000
 
-ENTRYPOINT ["/app-exe"]
+# https://blog.jetbrains.com/go/2020/05/06/debugging-a-go-application-inside-a-docker-container/
+# https://github.com/svennjegac/dockerdev
+CMD ["/go/bin/dlv", "--listen=:40000", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/app-exe"]

@@ -14,9 +14,13 @@ spec:
     spec:
       containers:
         - name: wallet-http
-          image: wallet-http:v1.0.13
+          securityContext:
+            capabilities:
+              add: [ "SYS_PTRACE" ]
+          image: wallet-http:v1.0.17
           ports:
             - containerPort: 8112
+            - containerPort: 40000
         - name: agent
           image: otel/opentelemetry-collector:0.18.0
           args:
