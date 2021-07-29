@@ -15,13 +15,14 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
-func Setup() {
+func Setup() func() {
 	traceExporter := createOTLPExporter()
 
-	traceProvider, _ := createTraceProvider(traceExporter)
-	// defer traceProviderShutdown()
+	traceProvider, traceProviderShutdown := createTraceProvider(traceExporter)
 
 	setOTELGlobals(traceProvider)
+
+	return traceProviderShutdown
 }
 
 func createConsoleExporter() *stdouttrace.Exporter {

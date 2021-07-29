@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"wallet-http/cmd/api/bootstrap"
-	"wallet-http/internal/optelm"
 )
 
 func main() {
-	optelm.Setup()
+	// tracerProviderShutdown := optelm.Setup()
+	// defer tracerProviderShutdown()
 
 	server := bootstrap.Server()
 
