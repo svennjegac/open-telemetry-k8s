@@ -6,5 +6,5 @@ import (
 )
 
 func Server() *server.Server {
-	return server.New(handlers.NewDefaultHandler())
+	return server.New(handlers.NewWalletRegistrationHandler())
 }

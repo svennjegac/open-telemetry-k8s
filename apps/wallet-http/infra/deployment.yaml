@@ -17,7 +17,7 @@ spec:
           securityContext:
             capabilities:
               add: [ "SYS_PTRACE" ]
-          image: wallet-http:v1.0.25
+          image: wallet-http:v1.0.32
           ports:
             - containerPort: 8112
             - containerPort: 40000

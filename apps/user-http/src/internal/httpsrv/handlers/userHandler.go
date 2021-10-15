@@ -47,7 +47,7 @@ func (d *UserHandler) GetUser() httprouter.Handle {
 		ctx, span := d.tracer.Start(context.Background(), "get-user")
 		defer span.End()
 
-		span.AddEvent("new get user id request", trace.WithAttributes(attribute.Int("user-count", 87)))
+		span.AddEvent("new-get-user-id-request", trace.WithAttributes(attribute.Int("user-count", 87)))
 		span.SetAttributes(d.otelUserIDKey.String(params.ByName("id")))
 
 		_, span2 := d.tracer.Start(ctx, "background-gc-job")

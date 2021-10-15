@@ -4,6 +4,6 @@ cd $(dirname $0)
 
 eval $(minikube docker-env)
 
-docker build -t user-http:v2.0.10 ./../src/
+docker build -t user-http:v2.0.15 ./../src/
 
 kubectl apply -f deployment.yaml

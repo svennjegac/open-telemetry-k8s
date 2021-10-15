@@ -10,12 +10,12 @@ import (
 )
 
 type Server struct {
-	httpServer     *http.Server
-	defaultHandler DefaultHandler
+	httpServer                *http.Server
+	walletRegistrationHandler WalletRegistrationHandler
 }
 
 func New(
-	defaultHandler DefaultHandler,
+	walletRegistrationHandler WalletRegistrationHandler,
 ) *Server {
 	s := &Server{
 		httpServer: &http.Server{
@@ -25,7 +25,7 @@ func New(
 			WriteTimeout:      time.Second * 10,
 			IdleTimeout:       time.Second * 60,
 		},
-		defaultHandler: defaultHandler,
+		walletRegistrationHandler: walletRegistrationHandler,
 	}
 	s.setRoutes()
 	return s
@@ -72,7 +72,6 @@ func (s *Server) Start(ctx context.Context) {
 	}
 }
 
-type DefaultHandler interface {
-	Default() httprouter.Handle
-	Hello() httprouter.Handle
+type WalletRegistrationHandler interface {
+	RegisterUser() httprouter.Handle
 }

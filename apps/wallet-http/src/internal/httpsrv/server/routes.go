@@ -7,8 +7,7 @@ import (
 func (s *Server) setRoutes() {
 	router := httprouter.New()
 
-	router.GET("/register", s.defaultHandler.Default())
-	router.GET("/hello", s.defaultHandler.Hello())
+	router.GET("/register-user", s.walletRegistrationHandler.RegisterUser())
 
 	s.httpServer.Handler = router
 }

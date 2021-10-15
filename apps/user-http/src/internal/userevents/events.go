@@ -76,13 +76,11 @@ func (p *Producer) Produce(ctx context.Context, id string) error {
 		Opaque:        nil,
 		Headers:       nil,
 	}
-	carrier := otelkafka.NewMessageCarrier(msg)
-	otel.GetTextMapPropagator().Inject(ctx, carrier)
 
-	otelProducer := otelkafka.WrapProducer(producer)
+	otelProducer := otelkafka.WrapProducer(context.Background(), producer)
 	delCh := make(chan kafka.Event, 1)
 
-	err = otelProducer.Produce(msg, delCh)
+	err = otelProducer.Produce(ctx, msg, delCh)
 	if err != nil {
 		span.RecordError(err)
 		return errors.Wrap(err, "produce")

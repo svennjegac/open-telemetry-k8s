@@ -51,9 +51,9 @@ func createOTLPExporter() *otlptrace.Exporter {
 func createTraceProvider(traceExporter sdktrace.SpanExporter) (*sdktrace.TracerProvider, func()) {
 	resources := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceNameKey.String("wallet-api"),
+		semconv.ServiceNameKey.String("wallet"),
 		semconv.ServiceVersionKey.String("2.0"),
-		semconv.ServiceInstanceIDKey.String("instance-2"),
+		semconv.ServiceInstanceIDKey.String("instance-2xkh78"),
 	)
 
 	ctx := context.Background()
