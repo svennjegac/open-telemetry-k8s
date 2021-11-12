@@ -68,7 +68,7 @@ func (d *DB) GetUser(ctx context.Context, id string) (models.User, error) {
 		span.RecordError(
 			errors.New("db record error"),
 			trace.WithAttributes(
-				attribute.String("not-found", "memory-db"),
+				attribute.String("not-found-id", id),
 			),
 		)
 		span.SetStatus(codes.Error, "")

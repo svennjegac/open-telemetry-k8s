@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"time"
 
@@ -22,8 +21,6 @@ import (
 
 type UserHandler struct {
 	tracer                 trace.Tracer
-	otelUserIDKey          attribute.Key
-	otelTimeKey            attribute.Key
 	userRepository         UserRepository
 	walletRepository       WalletRepository
 	tellMeYourIPRepository TellMeYourIPRepository
@@ -33,8 +30,6 @@ type UserHandler struct {
 func NewDefaultHandler() *UserHandler {
 	return &UserHandler{
 		tracer:                 otel.Tracer("sven.njegac/open-telemetry-k8s"),
-		otelUserIDKey:          "get-user/id",
-		otelTimeKey:            "get-user/time",
 		userRepository:         memorydb.New(),
 		walletRepository:       wallet.New(),
 		tellMeYourIPRepository: tellip.NewTellIP(),
@@ -44,40 +39,48 @@ func NewDefaultHandler() *UserHandler {
 
 func (d *UserHandler) GetUser() httprouter.Handle {
 	return func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		ctx, span := d.tracer.Start(context.Background(), "get-user")
+		ctx, span := otel.Tracer("sven.njegac/open-telemetry-k8s").Start(context.Background(), "get-user")
 		defer span.End()
 
-		span.AddEvent("new-get-user-id-request", trace.WithAttributes(attribute.Int("user-count", 87)))
-		span.SetAttributes(d.otelUserIDKey.String(params.ByName("id")))
+		// Adds new log (event).
+		span.AddEvent(
+			"new-get-user-id-request",
+			trace.WithAttributes(
+				attribute.Int("user-count", 87),
+				attribute.String("user-id", params.ByName("id")),
+			),
+			trace.WithTimestamp(time.Now()),
+			trace.WithStackTrace(true),
+		)
+		// Set tag on the span.
+		span.SetAttributes(attribute.String("user-id", params.ByName("id")))
 
-		_, span2 := d.tracer.Start(ctx, "background-gc-job")
-		time.Sleep(time.Millisecond * 20)
-
-		d.requestValidator(ctx)
+		// Fake delay.
 		time.Sleep(time.Millisecond * 30)
 
+		// Register user to wallet. (HTTP call)
 		err := d.walletRepository.RegisterToWallet(ctx, params.ByName("id"))
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
 			_, err = fmt.Fprintf(writer, "err: %+v", err)
 			if err != nil {
-				log.Println("response print err", err)
+				log.Println("wallet err", err)
 			}
 			return
 		}
 
-		span2.End()
-
+		// Get user from user collection. (in memory DB)
 		user, err := d.userRepository.GetUser(ctx, params.ByName("id"))
 		if err != nil {
 			writer.WriteHeader(http.StatusNotFound)
 			_, err = fmt.Fprintf(writer, "err: %+v", err)
 			if err != nil {
-				log.Println("response print err", err)
+				log.Println("user err", err)
 			}
 			return
 		}
 
+		// Get IP of
 		err = d.tellMeYourIPRepository.TellMeYourIP(ctx)
 		if err != nil {
 			writer.WriteHeader(http.StatusInternalServerError)
@@ -104,16 +107,6 @@ func (d *UserHandler) GetUser() httprouter.Handle {
 			log.Println("response print err", err)
 		}
 	}
-}
-
-func (d *UserHandler) requestValidator(ctx context.Context) {
-	ctx, span := d.tracer.Start(ctx, "request-validator")
-	defer span.End()
-
-	time.Sleep(time.Duration(rand.Intn(60)+100) * time.Millisecond)
-
-	span.SetAttributes(d.otelTimeKey.String(time.Now().String()))
-	span.AddEvent("successful request validation")
 }
 
 type UserRepository interface {
